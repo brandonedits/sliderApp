@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <style>
+        .msg {
+            color: red;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-auto-rows: 100px;
+            grid-gap: 5px;
+            padding: 5px;
+        }
+
+        .grid-container button {
+            color: #ffffff;
+            background-color: #a2b9bc;
+            border: 0;
+            cursor: pointer;
+        }
+        
+        .grid-container button:hover {
+            background-color: #b2ad7f;
+        }
+
+        button:focus {
+            outline: none;
+        }
+
+        button.empty,
+        button.empty:hover {
+            background-color: #878f99;
+            cursor: default;
+        }
+    </style>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SliderApp</title>
+</head>
+<body>
+
+    <form id="slider" action="">
+        <input type="text" id="quote" placeholder="Enter a phrase" maxlength="105">
+        <span class="msg"></span>
+    </form>
+<br>
+
+    <div id="grid" class="grid-container"></div>
+
+    <script>
+        var form = document.getElementById('slider');
+        var phrase = document.getElementById('quote');
+        var grid = document.getElementById('grid');
+        var btns = document.querySelectorAll('button');
+        var msg = document.querySelector('.msg');
+
+        // form onKeyup event
+        form.addEventListener('input', createGrid);
+
+        function createGrid(e){
+
+            var input = e.target.value;
+            input = input.split(' ').join('_'); // replace space w/ _
+            msg.innerHTML = '';
+            grid.innerHTML = '';
+
+            if(input.length < 10){
+                msg.innerHTML = 'More characters needed!';
+            } else if(input.length >= 105){
+                msg.innerHTML = 'Too many characters! Must be 105 or less!';
+            } else {
+
+                var tilesNeeded = Math.round(input.length / 2) + 1;
+                var tiles = [];
+
+                if(isPrime(tilesNeeded)){
+                    tilesNeeded += 1;
+                }
+
+                var start = 0;
+                var jump = 2;
+
+                while(start < input.length) {
+                    tiles.push(input.substring(start, start + jump));
+                    start += jump;
+                    if(input.length - start == tilesNeeded - tiles.length -1){
+                        jump = 1;
+                    }
+                }
+
+                // add empty tile
+                tiles.push('');
+
+                //copy tiles
+                var unshuffledTiles = tiles.slice();
+
+                // shuffle tiles
+                shuffle(tiles);
+
+                gridDimensions(tiles, tilesNeeded, unshuffledTiles);
+            }
+        }
+
+        function shuffle(array){
+            for(var i = array.length - 1; i > 0; i--){
+                var j = Math.floor(Math.random() * i);
+                var k = array[i];
+                array[i] = array[j];
+                array[j] = k;
+            }
+        }
+       
+        // determine if number of tiles needed based on input is a prime number
+        function isPrime(num){
+            for(var i = 2, s = Math.sqrt(num); i <= s; i++){
+                if(num % i === 0){
+                    return false;
+                }
+            }
+            return num > 1; 
+        }
+
+        function gridDimensions(tiles, tilesNeeded, unshuffledTiles){
+            let col;
+            let totalTiles = tiles.length;
+
+            if(!isPrime(totalTiles)){
+                if(totalTiles > 8 && totalTiles % 4 == 0){
+                    col = totalTiles / 4
+                } else {
+                    col = totalTiles / 2;
+                } 
+            }
+
+            if(totalTiles >= 9 && totalTiles != 10 && totalTiles != 14){
+                if(totalTiles % 3 == 0) {
+                    col = totalTiles / 3;
+                }
+
+                if(totalTiles % 5 == 0){
+                    col = totalTiles / 5;
+                }
+
+                if(totalTiles % 7 == 0){
+                    col = totalTiles / 7;
+                }
+            }
+
+            let rows = totalTiles / col;
+            var auto = "auto ";
+            autoRepeat = auto.repeat(col);
+            
+            document.getElementById('grid').style.gridTemplateColumns = autoRepeat;
+
+            for(var i = 0; i < tilesNeeded; i++){
+
+                // create btns
+                var btn = document.createElement('button');
+                btn.appendChild(document.createTextNode(tiles[i]));
+                grid.appendChild(btn);
+            }
+
+            // set empty btn css
+            var btns = document.querySelectorAll('div[id="grid"] button');
+
+            for(var i = 0; i < btns.length; i++){
+                btns[i].setAttribute('id', 'tile' + [i]);
+
+                if(btns[i].textContent == ''){
+                    btns[i].classList.add('empty');
+                }
+
+                function listen(index){
+                    btns[i].addEventListener('click', function(e) {
+                        swapTiles(index, unshuffledTiles);
+                    }, false);
+                }       
+                listen(i);
+            }      
+        }
+
+        function swapTiles(i, unshuffledTiles){
+
+            var targetTile = 'tile' + i;
+            var emptyTile = document.getElementsByClassName('empty')[0].id;
+
+            var temp = document.getElementById(targetTile).className;
+            document.getElementById(targetTile).className = document.getElementById(emptyTile).className;
+            document.getElementById(emptyTile).className = temp;
+
+            var tempTxt = document.getElementById(targetTile).innerHTML;
+            document.getElementById(targetTile).innerHTML = document.getElementById(emptyTile).innerHTML;
+            document.getElementById(emptyTile).innerHTML = tempTxt;
+
+            var btns = document.querySelectorAll('div[id="grid"] button');
+
+            var answer = [];
+            for(var i = 0; i < btns.length; i++){
+                answer.push(btns[i].innerHTML);  
+            }
+
+            arraysMatch(unshuffledTiles, answer);
+        }
+
+        function arraysMatch(unshuffledTiles, answer){
+
+            let str1 = unshuffledTiles.toString();
+            let str2 = answer.toString();
+
+            if(str1 == str2){
+                msg.innerHTML = 'CORRECT';
+            } else {
+                msg.innerHTML = '';
+            }
+        }
+    </script>
+    
+</body>
+</html>
